@@ -1,13 +1,12 @@
 package com.example;
 
 import com.example.api.ElpriserAPI;
-import java.text.NumberFormat;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Labboration 1 for ITHS 2025
@@ -25,60 +24,61 @@ import java.util.Locale;
  * @author Daniel Marton
  */
 
-
 public class Main {
 
-    public static final Locale SWEDISH = new Locale("sv", "SE");
-    public static final NumberFormat PRICE_FORMAT = NumberFormat.getNumberInstance(SWEDISH);
     public static final int CONVERT_TO_ORE = 100;
+
     public static final DateTimeFormatter HOUR_ONLY = DateTimeFormatter.ofPattern("HH");
     public static final DateTimeFormatter HOUR_AND_MINUTES = DateTimeFormatter.ofPattern("HH:mm");
 
-
     public static void main(String[] args) {
         ElpriserAPI elpriserAPI = new ElpriserAPI();
-        List<ElpriserAPI.Elpris> allaPriser =  new ArrayList<>();
+
         String zone = "";
         int chargingTime = 0;
         LocalDate date = LocalDate.now(); //Set as current date as default
         boolean sorted = false;
 
+        //Start try catch block to catch exception
         try {
             for (int i = 0; i < args.length; i++) {
                 switch (args[i]) {
                     case "--zone":
+                        //Check if the zone is entered correctly
                         String zoneArg = args[++i].trim();
                         if (zoneArg.equalsIgnoreCase("SE1")
                                 || zoneArg.equalsIgnoreCase("SE2")
                                 || zoneArg.equalsIgnoreCase("SE3")
                                 || zoneArg.equalsIgnoreCase("SE4")) {
                             zone = zoneArg.toUpperCase();
-
                         } else {
-                            throw new IllegalArgumentException("invalid zone");
+                            throw new IllegalArgumentException("invalid zone"); //Throw exception if zone is invalid
                         }
                         break;
 
                     case "--date":
+                        //Match date to see if the format is correct, then convert it to LocalDate
                         String dateArg = args[++i].trim();
                         if (dateArg.matches("\\d{4}-\\d{2}-\\d{2}")) {
                             date = LocalDate.parse(dateArg);
-
                         } else {
                             throw new IllegalArgumentException("invalid date");
                         }
                         break;
 
                     case "--charging":
+                        //Remove the "h" and capture the number in chargingTime if its 2, 4 or 8
                         String timeArg = args[++i].trim();
                         timeArg = timeArg.replace("h", "");
                         chargingTime = Integer.parseInt(timeArg);
+
                         if (chargingTime != 2 && chargingTime != 4 && chargingTime != 8) {
                             throw new IllegalArgumentException("Not a valid charging time");
                         }
                         break;
 
                     case "--sorted":
+                        //Set sorted to true, so the sorted method runs
                         sorted = true;
                         break;
 
@@ -87,24 +87,34 @@ public class Main {
                         break;
 
                     default:
+                        //Set defailt exception to cover for any unknown input errors
                         throw new IllegalArgumentException("unknown input");
                 }
             }
         } catch (IllegalArgumentException e) {
+            //Capture the exception here
             System.out.println(e.getMessage());
         }
-
+        //If there is no --zone command, it will be empty
+        //I set it to SE1 as default and print the helpMenu()
         if (zone.isEmpty()) {
             zone = "SE1";
             helpMenu();
         }
 
+        //Use the string zone from the args to get the enum
         ElpriserAPI.Prisklass prisklass = ElpriserAPI.Prisklass.valueOf(zone);
+        //Here we get the days prices for specific zone
         List<ElpriserAPI.Elpris> dagensPriser = elpriserAPI.getPriser(date, prisklass);
-        List<ElpriserAPI.Elpris> framtidaPriser = elpriserAPI.getPriser(date.plusDays(1), prisklass);
+        //Here we get tomorrow's prices with date.plusDays(1)
+        List<ElpriserAPI.Elpris> framtidaPriser = elpriserAPI.getPriser(date.plusDays(1), prisklass); //
+        //Create a list that will contain todays and tomorrow's prices
+        List<ElpriserAPI.Elpris> allaPriser =  new ArrayList<>();
+        //Now we add todays and tommorrow's prices to the new list
         allaPriser.addAll(dagensPriser);
         allaPriser.addAll(framtidaPriser);
 
+//        This part is not needed and not finished, but it will filter the prices from now and for the next 24hours
 //        ZoneId zoneId = ZoneId.of("Europe/Stockholm");
 //        ZonedDateTime now = ZonedDateTime.now(zoneId);
 //        ZonedDateTime cutoff = now.plusHours(24);
@@ -116,44 +126,46 @@ public class Main {
 //            }
 //        }
 
-
+        //First we check if chargingTime is entered
         if (chargingTime != 0) {
             chargingWindow(allaPriser, chargingTime);
+        } else if (sorted) {
+            //Then we check if sorted is entered
+            printPricesSorted(allaPriser);
         } else {
-            if (sorted) {
-                printPricesSorted(allaPriser);
-            } else {
-                printLowest(allaPriser);
-                printHighest(allaPriser);
-                printPrices(allaPriser);
-            }
+            //If none of those, we print lowest, highest and average
+            printLowest(allaPriser);
+            printHighest(allaPriser);
+            printAveragePrices(allaPriser);
         }
     }
 
-
-    public static void printPrices(List<ElpriserAPI.Elpris> allaPriser) {
+    public static void printAveragePrices(List<ElpriserAPI.Elpris> allaPriser) {
         double sum = 0;
-        double average = 0;
-
+        //Check if list is empty
         if (isEmpty(allaPriser)) return;
-
+        //Loop and add all prices into sum
         for (ElpriserAPI.Elpris pris : allaPriser) {
             sum += pris.sekPerKWh();
         }
-
-        average = (sum / allaPriser.size()) * CONVERT_TO_ORE;
+        //Calculate average and convert to öre, then print
+        double average = (sum / allaPriser.size()) * CONVERT_TO_ORE;
         System.out.printf("Medelpris: %.2f öre\n", average);
     }
 
     public static void printPricesSorted(List<ElpriserAPI.Elpris> allaPriser) {
+        //Check if list is empty
         if (isEmpty(allaPriser)) return;
+        //Sort the list, then reverse it to get descending order
         allaPriser.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh).reversed());
+        //Now we loop and print the sorted list
         for (ElpriserAPI.Elpris pris : allaPriser) {
             System.out.printf("%s-%s %.2f öre\n", pris.timeStart().format(HOUR_ONLY), pris.timeEnd().format(HOUR_ONLY), (pris.sekPerKWh() * CONVERT_TO_ORE));
         }
     }
 
     public static boolean isEmpty(List<ElpriserAPI.Elpris> elpriser) {
+        //Checks if the list is empty and prints a message, returns true or false
         if (elpriser.isEmpty()) {
             System.out.println("Inga priser tillgängliga.");
             return true;
@@ -162,12 +174,13 @@ public class Main {
     }
 
     public static void chargingWindow(List<ElpriserAPI.Elpris> allaPriser, int chargingTime) {
+        //Check if list is empty
         if (isEmpty(allaPriser)) return;
 
         double minSum = Double.MAX_VALUE;
         int bestStart = 0;
         double average = 0;
-
+        //We do a sliding window algorithm, compares the sum of each window and saves the lowest price window
         for (int i = 0; i <= allaPriser.size() - chargingTime; i++) {
             double sum = 0;
             for (int j = 0; j < chargingTime; j++) {
@@ -175,26 +188,26 @@ public class Main {
             }
             if (sum < minSum) {
                 minSum = sum;
-                bestStart = i;
+                bestStart = i; //Save index for printing
             }
+            //Calculate average price for the window
             average = minSum / chargingTime;
         }
-        ElpriserAPI.Elpris start = allaPriser.get(bestStart);
-        ElpriserAPI.Elpris end = allaPriser.get(bestStart + chargingTime - 1);
 
-
+        ElpriserAPI.Elpris start = allaPriser.get(bestStart); //Set start time
         System.out.printf("Påbörja laddning kl %s för %d timmars laddning\nMedelpris för fönster: %.2f öre"
                 , start.timeStart().format(HOUR_AND_MINUTES), chargingTime, average *  CONVERT_TO_ORE);
     }
 
     public static void printHighest(List<ElpriserAPI.Elpris> allaPriser) {
+        //Check if list is empty
         if (isEmpty(allaPriser)) return;
-
+        //Check if the list has 96 entries
         if (allaPriser.size() == 96) {
             printHighest96(allaPriser);
             return;
         }
-
+        //For normal data with 24 entries, we compare each price and saves the largest
         ElpriserAPI.Elpris maxPrice = allaPriser.getFirst();
         for (ElpriserAPI.Elpris pris : allaPriser) {
             if (pris.sekPerKWh() > maxPrice.sekPerKWh()) {
@@ -205,25 +218,22 @@ public class Main {
     }
 
     public static void printHighest96(List<ElpriserAPI.Elpris> allaPriser) {
-        List<ElpriserAPI> hourlyPrices = new ArrayList<>();
         double max = 0;
         int maxIndex = 0;
-
-        for (int hour = 0; hour < 24; hour++) {
+        //This is a sweet little algorithm
+        for (int hour = 0; hour < 24; hour++) {                     //First we loop 24 times, this is the 24 current hours
             double sum = 0;
-            for (int j = 0; j < 4; j++) {
-                sum += allaPriser.get(hour * 4 + j).sekPerKWh();
+            for (int j = 0; j < 4; j++) {                         //Now we loop 4 times, since there is 4 quarters for each hour
+                sum += allaPriser.get(hour * 4 + j).sekPerKWh(); //We save the sum and uses the (hour * 4) to start at the
+            }                                                   //correct hour. We add +j to iterate each of the 4 quarters
+            double average = sum / 4;                          // We save the sum of the prices of the quarters and
+            if (max < average) {                              // divide by 4 to get the hours average price.
+                max = average;                               // Now we can compare and save the max average to print
+                maxIndex = hour;                            // We also want to save the index for the start hour
             }
-            double average = sum / 4;
-            if (max < average) {
-                max = average;
-                maxIndex = hour;
-            }
-
         }
-        ElpriserAPI.Elpris start = allaPriser.get(maxIndex * 4);
-        ElpriserAPI.Elpris end = allaPriser.get(maxIndex * 4 + 3);
-
+        ElpriserAPI.Elpris start = allaPriser.get(maxIndex * 4); //We need to * 4 again to end up in the correct spot
+        ElpriserAPI.Elpris end = allaPriser.get(maxIndex * 4 + 3); //Add 3 to get the end time
         System.out.printf("Högsta pris: %s-%s %.2f öre\n",
                 start.timeStart().format(HOUR_ONLY),
                 end.timeEnd().format(HOUR_ONLY),
@@ -232,6 +242,7 @@ public class Main {
     }
 
     public static void printLowest(List<ElpriserAPI.Elpris> allaPriser) {
+        //This is the same as printHighest but < instead of >
         if (isEmpty(allaPriser)) return;
         if (allaPriser.size() == 96) {
             printLowest96(allaPriser);
@@ -265,7 +276,6 @@ public class Main {
 
         ElpriserAPI.Elpris start = allaPriser.get(minIndex * 4);
         ElpriserAPI.Elpris end = allaPriser.get(minIndex * 4 + 3);
-
         System.out.printf("Lägsta pris: %s-%s %.2f öre\n",
                 start.timeStart().format(HOUR_ONLY),
                 end.timeEnd().format(HOUR_ONLY),
@@ -273,6 +283,7 @@ public class Main {
     }
 
     public static void helpMenu(){
+        //Prints info for the user
         System.out.println("Usage:");
         System.out.println("--zone SE1/SE2/SE3/SE4");
         System.out.println("--date YYYY-MM-DD");
