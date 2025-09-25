@@ -2,11 +2,14 @@ package com.example;
 
 import com.example.api.ElpriserAPI;
 
+import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Labboration 1 for ITHS 2025
@@ -25,6 +28,13 @@ import java.util.List;
  */
 
 public class Main {
+
+    public static final Locale SWEDISH = new Locale("sv", "SE");
+    public static final NumberFormat PRICE_FORMAT = NumberFormat.getNumberInstance(SWEDISH);
+    static {
+        PRICE_FORMAT.setMinimumFractionDigits(2);
+        PRICE_FORMAT.setMaximumFractionDigits(2);
+    }
 
     public static final int CONVERT_TO_ORE = 100;
 
@@ -150,7 +160,7 @@ public class Main {
         }
         //Calculate average and convert to öre, then print
         double average = (sum / allaPriser.size()) * CONVERT_TO_ORE;
-        System.out.printf("Medelpris: %.2f öre\n", average);
+        System.out.printf("Medelpris: %s öre\n", PRICE_FORMAT.format(average));
     }
 
     public static void printPricesSorted(List<ElpriserAPI.Elpris> allaPriser) {
@@ -160,7 +170,8 @@ public class Main {
         allaPriser.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh).reversed());
         //Now we loop and print the sorted list
         for (ElpriserAPI.Elpris pris : allaPriser) {
-            System.out.printf("%s-%s %.2f öre\n", pris.timeStart().format(HOUR_ONLY), pris.timeEnd().format(HOUR_ONLY), (pris.sekPerKWh() * CONVERT_TO_ORE));
+            double convertedPrice = pris.sekPerKWh() * CONVERT_TO_ORE;
+            System.out.printf("%s-%s %s öre\n", pris.timeStart().format(HOUR_ONLY), pris.timeEnd().format(HOUR_ONLY), PRICE_FORMAT.format(convertedPrice));
         }
     }
 
@@ -195,8 +206,9 @@ public class Main {
         }
 
         ElpriserAPI.Elpris start = allaPriser.get(bestStart); //Set start time
-        System.out.printf("Påbörja laddning kl %s för %d timmars laddning\nMedelpris för fönster: %.2f öre"
-                , start.timeStart().format(HOUR_AND_MINUTES), chargingTime, average *  CONVERT_TO_ORE);
+        double convertedPrice = average * CONVERT_TO_ORE;
+        System.out.printf("Påbörja laddning kl %s för %d timmars laddning\nMedelpris för fönster: %s öre"
+                , start.timeStart().format(HOUR_AND_MINUTES), chargingTime, PRICE_FORMAT.format(convertedPrice));
     }
 
     public static void printHighest(List<ElpriserAPI.Elpris> allaPriser) {
@@ -214,7 +226,10 @@ public class Main {
                 maxPrice = pris;
             }
         }
-        System.out.printf("Högsta pris: %s-%s %.2f öre\n", maxPrice.timeStart().format(HOUR_ONLY), maxPrice.timeEnd().format(HOUR_ONLY), (maxPrice.sekPerKWh()) * CONVERT_TO_ORE);
+        double convertedPrice = maxPrice.sekPerKWh() * CONVERT_TO_ORE;
+        System.out.printf("Högsta pris: %s-%s %s öre\n", maxPrice.timeStart().format(HOUR_ONLY),
+                                                            maxPrice.timeEnd().format(HOUR_ONLY),
+                                                            PRICE_FORMAT.format(convertedPrice));
     }
 
     public static void printHighest96(List<ElpriserAPI.Elpris> allaPriser) {
@@ -234,10 +249,11 @@ public class Main {
         }
         ElpriserAPI.Elpris start = allaPriser.get(maxIndex * 4); //We need to * 4 again to end up in the correct spot
         ElpriserAPI.Elpris end = allaPriser.get(maxIndex * 4 + 3); //Add 3 to get the end time
-        System.out.printf("Högsta pris: %s-%s %.2f öre\n",
+        double convertedPrice = max * CONVERT_TO_ORE;
+        System.out.printf("Högsta pris: %s-%s %s öre\n",
                 start.timeStart().format(HOUR_ONLY),
                 end.timeEnd().format(HOUR_ONLY),
-                max * CONVERT_TO_ORE
+                PRICE_FORMAT.format(convertedPrice)
         );
     }
 
@@ -255,7 +271,10 @@ public class Main {
                 minPrice = pris;
             }
         }
-        System.out.printf("Lägsta pris: %s-%s %.2f öre\n", minPrice.timeStart().format(HOUR_ONLY), minPrice.timeEnd().format(HOUR_ONLY), (minPrice.sekPerKWh()) * CONVERT_TO_ORE);
+        double convertedPrice = minPrice.sekPerKWh() * CONVERT_TO_ORE;
+        System.out.printf("Lägsta pris: %s-%s %s öre\n", minPrice.timeStart().format(HOUR_ONLY),
+                                                            minPrice.timeEnd().format(HOUR_ONLY),
+                                                            PRICE_FORMAT.format(convertedPrice));
     }
 
     public static void printLowest96(List<ElpriserAPI.Elpris> allaPriser) {
@@ -276,10 +295,11 @@ public class Main {
 
         ElpriserAPI.Elpris start = allaPriser.get(minIndex * 4);
         ElpriserAPI.Elpris end = allaPriser.get(minIndex * 4 + 3);
-        System.out.printf("Lägsta pris: %s-%s %.2f öre\n",
+        double convertedPrice = min * CONVERT_TO_ORE;
+        System.out.printf("Lägsta pris: %s-%s %s öre\n",
                 start.timeStart().format(HOUR_ONLY),
                 end.timeEnd().format(HOUR_ONLY),
-                min * CONVERT_TO_ORE);
+                PRICE_FORMAT.format(convertedPrice));
     }
 
     public static void helpMenu(){
