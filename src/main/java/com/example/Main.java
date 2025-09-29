@@ -4,7 +4,8 @@ import com.example.api.ElpriserAPI;
 
 import java.text.NumberFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -121,20 +122,14 @@ public class Main {
         //Create a list that will contain todays and tomorrow's prices
         List<ElpriserAPI.Elpris> allaPriser =  new ArrayList<>();
         //Now we add todays and tommorrow's prices to the new list
-        allaPriser.addAll(dagensPriser);
-        allaPriser.addAll(framtidaPriser);
-
-//        This part is not needed and not finished, but it will filter the prices from now and for the next 24hours
-//        ZoneId zoneId = ZoneId.of("Europe/Stockholm");
-//        ZonedDateTime now = ZonedDateTime.now(zoneId);
-//        ZonedDateTime cutoff = now.plusHours(24);
-
-//        System.out.println(allaPriser);
-//        for (ElpriserAPI.Elpris elpris : allaPriser) {
-//            if (elpris.timeStart().isAfter(now) && elpris.timeEnd().isBefore(cutoff)) {
-//                System.out.println(elpris);
-//            }
-//        }
+        //First we need to check if the user entered a custom date
+        if (date.isEqual(LocalDate.now())) {
+            allaPriser.addAll(filterPrices(dagensPriser));
+            allaPriser.addAll(filterPrices(framtidaPriser));
+        } else {
+            allaPriser.addAll(dagensPriser);
+            allaPriser.addAll(framtidaPriser);
+        }
 
         //First we check if chargingTime is entered
         if (chargingTime != 0) {
@@ -148,6 +143,20 @@ public class Main {
             printHighest(allaPriser);
             printAveragePrices(allaPriser);
         }
+    }
+
+    public static List<ElpriserAPI.Elpris> filterPrices (List<ElpriserAPI.Elpris> priser) {
+        ZoneId zoneId = ZoneId.of("Europe/Stockholm");
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        ZonedDateTime until = now.plusHours(24);
+        List<ElpriserAPI.Elpris> filtered =  new ArrayList<>();
+        //Here we check if the time is after or before the next 24h and adds them to a list that we return
+        for (ElpriserAPI.Elpris elpris : priser) {
+            if (!elpris.timeEnd().isBefore(now) && !elpris.timeStart().isAfter(until)) {
+                filtered.add(elpris);
+            }
+        }
+        return filtered;
     }
 
     public static void printAveragePrices(List<ElpriserAPI.Elpris> allaPriser) {
