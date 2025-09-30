@@ -66,8 +66,8 @@ public class Main {
         //If there is no --zone command, it will be empty
         //I set it to SE1 as default and print the helpMenu()
         if (zone.isEmpty()) {
-            zone = "SE1";
             helpMenu();
+            zone = "SE1";
         }
 
         //Use the string zone from the args to get the enum
