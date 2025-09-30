@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+
 /**
  * Labboration 1 for ITHS 2025
  *
@@ -32,13 +33,8 @@ public class Main {
 
     public static final Locale SWEDISH = new Locale("sv", "SE");
     public static final NumberFormat PRICE_FORMAT = NumberFormat.getNumberInstance(SWEDISH);
-    static {
-        PRICE_FORMAT.setMinimumFractionDigits(2);
-        PRICE_FORMAT.setMaximumFractionDigits(2);
-    }
-
+    static {PRICE_FORMAT.setMinimumFractionDigits(2); PRICE_FORMAT.setMaximumFractionDigits(2);}
     public static final int CONVERT_TO_ORE = 100;
-
     public static final DateTimeFormatter HOUR_ONLY = DateTimeFormatter.ofPattern("HH");
     public static final DateTimeFormatter HOUR_AND_MINUTES = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -50,61 +46,22 @@ public class Main {
         LocalDate date = LocalDate.now(); //Set as current date as default
         boolean sorted = false;
 
+
+
         //Start try catch block to catch exception
         try {
             for (int i = 0; i < args.length; i++) {
                 switch (args[i]) {
-                    case "--zone":
-                        //Check if the zone is entered correctly
-                        String zoneArg = args[++i].trim();
-                        if (zoneArg.equalsIgnoreCase("SE1")
-                                || zoneArg.equalsIgnoreCase("SE2")
-                                || zoneArg.equalsIgnoreCase("SE3")
-                                || zoneArg.equalsIgnoreCase("SE4")) {
-                            zone = zoneArg.toUpperCase();
-                        } else {
-                            throw new IllegalArgumentException("invalid zone"); //Throw exception if zone is invalid
-                        }
-                        break;
-
-                    case "--date":
-                        //Match date to see if the format is correct, then convert it to LocalDate
-                        String dateArg = args[++i].trim();
-                        if (dateArg.matches("\\d{4}-\\d{2}-\\d{2}")) {
-                            date = LocalDate.parse(dateArg);
-                        } else {
-                            throw new IllegalArgumentException("invalid date");
-                        }
-                        break;
-
-                    case "--charging":
-                        //Remove the "h" and capture the number in chargingTime if its 2, 4 or 8
-                        String timeArg = args[++i].trim();
-                        timeArg = timeArg.replace("h", "");
-                        chargingTime = Integer.parseInt(timeArg);
-
-                        if (chargingTime != 2 && chargingTime != 4 && chargingTime != 8) {
-                            throw new IllegalArgumentException("Not a valid charging time");
-                        }
-                        break;
-
-                    case "--sorted":
-                        //Set sorted to true, so the sorted method runs
-                        sorted = true;
-                        break;
-
-                    case "--help":
-                        helpMenu();
-                        break;
-
-                    default:
-                        //Set defailt exception to cover for any unknown input errors
-                        throw new IllegalArgumentException("unknown input");
+                    case "--zone" -> zone = Logic.checkZone(args[++i].trim()); //Check if the zone is entered correctly
+                    case "--date" -> date = Logic.checkDate(args[++i].trim()); //Match date to see if the format is correct, then convert it to LocalDate
+                    case "--charging" -> chargingTime = Logic.parseCharging(args[++i].trim()); //Remove the "h" and capture the number in chargingTime if its 2, 4 or 8
+                    case "--sorted" -> sorted = true; //Set sorted to true, so the sorted method runs
+                    case "--help" -> helpMenu();
+                    default -> throw new IllegalArgumentException("unknown input"); //Set default exception to cover for any unknown input errors
                 }
             }
         } catch (IllegalArgumentException e) {
-            //Capture the exception here
-            System.out.println(e.getMessage());
+            System.out.println(e.getMessage()); //Capture the exception here
         }
         //If there is no --zone command, it will be empty
         //I set it to SE1 as default and print the helpMenu()
@@ -144,6 +101,7 @@ public class Main {
             printAveragePrices(allaPriser);
         }
     }
+
 
     public static List<ElpriserAPI.Elpris> filterPrices (List<ElpriserAPI.Elpris> priser) {
         ZoneId zoneId = ZoneId.of("Europe/Stockholm");
