@@ -66,7 +66,6 @@ public class Main {
         //If there is no --zone command, it will be empty
         //I set it to SE1 as default and print the helpMenu()
         if (zone.isEmpty()) {
-            zone = "SE1";
             helpMenu();
         }
 
@@ -78,7 +77,7 @@ public class Main {
         List<ElpriserAPI.Elpris> framtidaPriser = elpriserAPI.getPriser(date.plusDays(1), prisklass); //
         //Create a list that will contain todays and tomorrow's prices
         List<ElpriserAPI.Elpris> allaPriser =  new ArrayList<>();
-        //Now we add todays and tommorrow's prices to the new list
+        //Now we add today's and tomorrow's prices to the new list
         //First we need to check if the user entered a custom date
         if (date.isEqual(LocalDate.now())) {
             allaPriser.addAll(filterPrices(dagensPriser));
@@ -90,7 +89,7 @@ public class Main {
 
         //First we check if chargingTime is entered
         if (chargingTime != 0) {
-            chargingWindow(allaPriser, chargingTime);
+            printChargingWindow(allaPriser, chargingTime);
         } else if (sorted) {
             //Then we check if sorted is entered
             printPricesSorted(allaPriser);
@@ -151,7 +150,7 @@ public class Main {
         return false;
     }
 
-    public static void chargingWindow(List<ElpriserAPI.Elpris> allaPriser, int chargingTime) {
+    public static void printChargingWindow(List<ElpriserAPI.Elpris> allaPriser, int chargingTime) {
         //Check if list is empty
         if (isEmpty(allaPriser)) return;
 
@@ -276,6 +275,7 @@ public class Main {
         System.out.println("--date YYYY-MM-DD");
         System.out.println("--sorted prints a sorted list");
         System.out.println("--charging 2h/4h/8h/");
+        System.exit(0);
     }
 
 }

@@ -236,7 +236,7 @@ class MainTest {
     }
 
     @Test
-    void chargingWindowDoesNotUseNextDay_whenNextDayUnavailable() {
+    void printChargingWindowDoesNotUseNextDay_whenNextDayUnavailable() {
         // Only today's 3 hours, request 2h window -> should compute within these only
         String mockJsonToday = """
                 [{"SEK_per_kWh":0.20,"EUR_per_kWh":0.02,"EXR":10.0,"time_start":"2025-09-04T00:00:00+02:00","time_end":"2025-09-04T01:00:00+02:00"},
@@ -365,7 +365,7 @@ class MainTest {
     }
 
     @Test
-    void chargingWindowSpansToNextDay_whenCheapestCrossesMidnight() {
+    void printChargingWindowSpansToNextDay_whenCheapestCrossesMidnight() {
         // Prices set so best 2h window is 23:00-01:00 (0.50 at 22, 0.20 at 23, 0.05 at 00, 0.40 at 01)
         LocalDate today = LocalDate.of(2025, 9, 4);
         LocalDate tomorrow = today.plusDays(1);
