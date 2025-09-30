@@ -66,6 +66,7 @@ public class Main {
         //If there is no --zone command, it will be empty
         //I set it to SE1 as default and print the helpMenu()
         if (zone.isEmpty()) {
+            zone = "SE1";
             helpMenu();
         }
 
@@ -275,7 +276,6 @@ public class Main {
         System.out.println("--date YYYY-MM-DD");
         System.out.println("--sorted prints a sorted list");
         System.out.println("--charging 2h/4h/8h/");
-        System.exit(0);
     }
 
 }
